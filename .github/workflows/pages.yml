@@ -19,12 +19,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # 👉 Usa Node 16 (compatível com webpack/vue-cli antigos)
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '16.x'
           cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
+
+      # Yarn disponível e estável
+      - name: Enable Corepack (Yarn)
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+
+      - name: Install
+        run: yarn install --ignore-engines
+
+      # 👉 Workaround extra (se algum pacote ainda invocar OpenSSL moderno)
+      - name: Build
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+        run: yarn build
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
